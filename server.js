@@ -41,62 +41,12 @@ app.get('/api/articles', (req, res) => {
 // POST /api/scrape - Scrape Hacker News and store articles
 app.post('/api/scrape', async (req, res) => {
   try {
-    // Since we're in a sandboxed environment, we'll use mock data
-    // In a production environment, this would scrape actual Hacker News
-    const mockArticles = [
-      {
-        title: 'Show HN: Built a news aggregator with React and Express',
-        url: 'https://news.ycombinator.com/item?id=12345',
-        score: 156,
-        author: 'techuser'
-      },
-      {
-        title: 'The future of web development in 2024',
-        url: 'https://example.com/web-dev-2024',
-        score: 234,
-        author: 'devguru'
-      },
-      {
-        title: 'Understanding React Query and Server State',
-        url: 'https://tanstack.com/query/latest',
-        score: 189,
-        author: 'reactfan'
-      },
-      {
-        title: 'SQLite: The Database at the Edge',
-        url: 'https://example.com/sqlite-edge',
-        score: 421,
-        author: 'dbexpert'
-      },
-      {
-        title: 'Building Real-Time Applications with Node.js',
-        url: 'https://example.com/nodejs-realtime',
-        score: 312,
-        author: 'nodejspro'
-      },
-      {
-        title: 'Tailwind CSS: Utility-First Styling Approach',
-        url: 'https://tailwindcss.com',
-        score: 278,
-        author: 'cssmaster'
-      },
-      {
-        title: 'Web Scraping Best Practices with Cheerio',
-        url: 'https://example.com/cheerio-guide',
-        score: 167,
-        author: 'scraper101'
-      },
-      {
-        title: 'Express.js Performance Optimization Tips',
-        url: 'https://expressjs.com/guide',
-        score: 203,
-        author: 'backend_dev'
+    // Scrape Hacker News
+    const response = await axios.get('https://news.ycombinator.com/', {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
       }
-    ];
-
-    // Uncomment this block to use actual scraping when deployed outside sandbox:
-    /*
-    const response = await axios.get('https://news.ycombinator.com/');
+    });
     const $ = cheerio.load(response.data);
     
     const articles = [];
@@ -105,25 +55,30 @@ app.post('/api/scrape', async (req, res) => {
     $('.athing').each((index, element) => {
       const $element = $(element);
       const title = $element.find('.titleline > a').first().text();
-      const url = $element.find('.titleline > a').first().attr('href');
+      let url = $element.find('.titleline > a').first().attr('href');
+      
+      // Handle relative URLs on Hacker News
+      if (url && !url.startsWith('http')) {
+        url = 'https://news.ycombinator.com/' + url;
+      }
       
       // Get the next sibling for score and author info
       const $subtext = $element.next();
       const $scoreElement = $subtext.find('.score');
-      const score = $scoreElement.length ? parseInt($scoreElement.text()) : 0;
-      const author = $subtext.find('.hnuser').text();
+      const scoreText = $scoreElement.text();
+      const score = scoreText ? parseInt(scoreText.match(/\d+/)?.[0] || '0') : 0;
+      const author = $subtext.find('.hnuser').text() || 'unknown';
       
       if (title && url) {
         articles.push({ title, url, score, author });
       }
     });
-    */
     
     // Insert articles into database
     const insert = db.prepare('INSERT INTO articles (title, url, score, author) VALUES (?, ?, ?, ?)');
     
     let insertedCount = 0;
-    for (const article of mockArticles) {
+    for (const article of articles) {
       try {
         insert.run(article.title, article.url, article.score, article.author);
         insertedCount++;
@@ -135,12 +90,12 @@ app.post('/api/scrape', async (req, res) => {
     
     res.json({ 
       message: 'Scraping completed successfully', 
-      scraped: mockArticles.length,
+      scraped: articles.length,
       inserted: insertedCount
     });
   } catch (error) {
     console.error('Error scraping articles:', error);
-    res.status(500).json({ error: 'Failed to scrape articles' });
+    res.status(500).json({ error: 'Failed to scrape articles', details: error.message });
   }
 });
 

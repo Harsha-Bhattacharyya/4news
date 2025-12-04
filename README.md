@@ -121,9 +121,14 @@ Scrapes news articles and stores them in the database.
 3. Articles will be displayed in a card layout with title, score, author, and timestamp
 4. Click on any article title to open it in a new tab
 
-## Note
+## Features
 
-The scraping functionality currently uses mock data due to sandbox environment limitations. To enable actual Hacker News scraping in production, uncomment the scraping code in `server.js` (lines 91-109) and comment out the mock data section.
+The application now scrapes real articles from Hacker News! When you click the "Scrape Hacker News" button:
+- Fetches the current front page of Hacker News
+- Extracts article titles, URLs, scores, and authors
+- Stores them in the SQLite database
+- Prevents duplicates with UNIQUE URL constraint
+- Displays up to 30 articles per scrape
 
 ## Project Structure
 
