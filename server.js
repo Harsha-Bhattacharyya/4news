@@ -20,7 +20,7 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS articles (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     title TEXT NOT NULL,
-    url TEXT NOT NULL,
+    url TEXT NOT NULL UNIQUE,
     score INTEGER,
     author TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -108,7 +108,7 @@ app.post('/api/scrape', async (req, res) => {
       const url = $element.find('.titleline > a').first().attr('href');
       
       // Get the next sibling for score and author info
-      const $subtext = $element.next('.athing');
+      const $subtext = $element.next();
       const $scoreElement = $subtext.find('.score');
       const score = $scoreElement.length ? parseInt($scoreElement.text()) : 0;
       const author = $subtext.find('.hnuser').text();
