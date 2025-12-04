@@ -66,7 +66,7 @@ app.post('/api/scrape', async (req, res) => {
       const $subtext = $element.next();
       const $scoreElement = $subtext.find('.score');
       const scoreText = $scoreElement.text();
-      const score = scoreText ? parseInt(scoreText.match(/\d+/)?.[0] || '0') : 0;
+      const score = scoreText ? (parseInt(scoreText.match(/\d+/)?.[0]) || 0) : 0;
       const author = $subtext.find('.hnuser').text() || 'unknown';
       
       if (title && url) {
@@ -95,7 +95,7 @@ app.post('/api/scrape', async (req, res) => {
     });
   } catch (error) {
     console.error('Error scraping articles:', error);
-    res.status(500).json({ error: 'Failed to scrape articles', details: error.message });
+    res.status(500).json({ error: 'Failed to scrape articles' });
   }
 });
 
